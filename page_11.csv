@@ -1,0 +1,23 @@
+,,FLOOR,,,,
+LABEL / PART DESCRIPTION,MATERIAL,QTY,DIM,LEN,ANGLE,NOTES
+X.0404.04800.FM Floor Board,"CDX 3/4"" CDX Plywood",3,4x4,48.00,90,
+,,WALLS,,,,
+LABEL / PART DESCRIPTION,MATERIAL,QTY,DIM,LEN,ANGLE,NOTES
+H.0404.07800.WP Post Wall,HEM Hemlock,11,4x4,78.00,90,"Mark bottom of post, Layout 40-42"""
+H.0404.07734.PP Porch Post,HEM Hemlock,2,4x4,77.75,90,PORCH POSTS
+H.0404.11100.BE1 Beam Bearing #1,HEM Hemlock,2,4x4,111.00,90,"Mark crown up- 1/2 lap both ends-TOP layout 24"" OC"
+H.0404.11100.BE2 Beam Bearing #2,HEM Hemlock,4,4x4,111.00,90,"1/2 lap both ends-ROTATE 180- layout 24"" OC"
+H.0404.15900.BE Beam Bearing,HEM Hemlock,2,4x4,159.00,90,"Mark crown up- half lap one end-BOTTOM- Notch 48-52"" from square end- Layout 24"" OC"
+H.0404.14400.GB Beam Gable,HEM Hemlock,1,4x4,144.00,90,"1/2 lap both ends-BOTTOM. Layout Bottom 70-74"""
+H.0404.05234.BE Beam Front Wall,HEM Hemlock,2,4x4,52.75,90,1/2 lap ONE end-Bottom
+H.0204.04500.DB Door Blocking,HEM Hemlock,4,2x4,45.00,90,
+H.0204.10300.WN Nailer Bearing Wall,HEM Hemlock,6,2x4,103.00,90,
+H.0204.06600.WN Nailer Gable,HEM Hemlock,2,2x4,66.00,90,
+H.0204.10300.WS Window Header and Sills,HEM Hemlock,4,2x4,103.00,90,"Layout 31.25-33.25"" 69.75-71.75"""
+H.0204.02412.WS Stud Window,HEM Hemlock,4,2x4,24.50,90,
+H.0404.07800.DP Door Post,HEM Hemlock,2,4x4,78.00,90,"Mark bottom of post- Layout 40-42"""
+H.0404.03000.AB Angle Brace,HEM Hemlock,20,4x4,30.00,45,
+H.0204.13600.DH Door Header 1,HEM Hemlock,1,2x4,136.00,72,Long to Long
+H.0204.14400.PH Porch Header 2,HEM Hemlock,1,2x4,144.00,90,
+H.0204.14400.DH Door Header 2,HEM Hemlock,1,2x4,144.00,90,
+H.0204.12534.PH Porch Header 1,HEM Hemlock,1,2x4,125.75,72,Long to Long
