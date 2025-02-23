@@ -2,6 +2,7 @@ import pandas as pd
 from typing import List, Dict, Tuple
 from pulp import *
 import argparse
+from collections import defaultdict
 
 class CuttingStockSolver:
     def __init__(self, prices_file: str, parts_file: str):
@@ -266,6 +267,39 @@ def print_simple_solution(result: Dict):
                    for cut in [detail['length']] * detail['count']]
             print(f"Board length: {pattern['stock_length']}\" - Cuts: [{', '.join(cuts)}]")
 
+def print_collapsed_solution(result: Dict):
+    """Print solution in collapsed format grouping by board length"""
+    print(f"Total Cost: ${result['total_cost']:.2f}")
+    print(f"Total Waste: {result['total_waste']:.2f} inches")
+    print("Boards Used:")
+    
+    # Group patterns by board length
+    length_patterns = defaultdict(list)
+    for pattern in result['cutting_patterns']:
+        cuts = [f"{cut:.2f}" for detail in pattern['cut_details'] 
+                for cut in [detail['length']] * detail['count']]
+        cuts.sort()  # Sort cuts to ensure consistent ordering
+        length_patterns[pattern['stock_length']].append({
+            'cuts': cuts,
+            'quantity': pattern['times_used']
+        })
+    
+    # Print collapsed patterns by board length
+    for stock_length in sorted(length_patterns.keys()):
+        patterns = length_patterns[stock_length]
+        total_quantity = sum(p['quantity'] for p in patterns)
+        
+        # Group cuts into sublists
+        unique_cut_patterns = []
+        for pattern in patterns:
+            cuts = pattern['cuts']
+            if not any(cuts == existing_cuts for existing_cuts in unique_cut_patterns):
+                unique_cut_patterns.append(cuts)
+        
+        # Format the cuts list
+        cut_patterns_str = ', '.join(f"[{', '.join(cuts)}]" for cuts in unique_cut_patterns)
+        print(f"Board length: {stock_length}\" - Quantity: {total_quantity} - Cuts: [{cut_patterns_str}]")
+
 def print_detailed_solution(result: Dict):
     """Print solution with theoretical minimums and gaps"""
     print(f"\nOptimal Board Cutting Solution:")
@@ -316,6 +350,9 @@ def main():
         # Print both formats
         print("Simple Output Format:")
         print_simple_solution(result)
+
+        print("\nSimple Output Format Collapsed:")
+        print_collapsed_solution(result)
         
         print("\nDetailed Output Format:")
         print_detailed_solution(result)
