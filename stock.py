@@ -1,6 +1,7 @@
 import pandas as pd
 from typing import List, Dict, Tuple
 from pulp import *
+import argparse
 
 class CuttingStockSolver:
     def __init__(self, prices_file: str, parts_file: str):
@@ -296,18 +297,37 @@ def print_detailed_solution(result: Dict):
         print(f"  Waste per board: {waste:.1f}\" ({waste/12:.2f}')")
 
 def main():
-    # Create solver instance
-    solver = CuttingStockSolver('4x4_prices.csv', '4x4_parts.csv')
+
+    # Set up argument parser
+    parser = argparse.ArgumentParser(description='Cutting Stock Optimizer')
+    parser.add_argument('prices_file', type=str, help='CSV file containing stock lengths and prices')
+    parser.add_argument('parts_file', type=str, help='CSV file containing required parts and quantities')
     
-    # Get optimal solution
-    result = solver.optimize()
-    
-    # Print both formats
-    print("Simple Output Format:")
-    print_simple_solution(result)
-    
-    print("\nDetailed Output Format:")
-    print_detailed_solution(result)
+    # Parse arguments
+    args = parser.parse_args()
+
+    try:
+        # Create solver instance
+        solver = CuttingStockSolver(args.prices_file, args.parts_file)
+        
+        # Get optimal solution
+        result = solver.optimize()
+        
+        # Print both formats
+        print("Simple Output Format:")
+        print_simple_solution(result)
+        
+        print("\nDetailed Output Format:")
+        print_detailed_solution(result)
+
+    except FileNotFoundError as e:
+        print(f"Error: Could not find file - {str(e)}")
+    except pd.errors.EmptyDataError:
+        print("Error: One or both CSV files are empty")
+    except pd.errors.ParserError:
+        print("Error: Invalid CSV file format")
+    except Exception as e:
+        print(f"Error: {str(e)}")
 
 if __name__ == "__main__":
     main()
