@@ -1,0 +1,12 @@
+﻿LABEL / PART DESCRIPTION,MATERIAL,QTY,DIM,LEN,ANGLE,NOTES
+H.0204.04500.DB Door Blocking,HEM Hemlock,4,2x4,45,90,
+H.0204.10300.WN Nailer Bearing Wall,HEM Hemlock,6,2x4,103,90,
+H.0204.06600.WN Nailer Gable,HEM Hemlock,2,2x4,66,90,
+H.0204.10300.WS Window Header and Sills,HEM Hemlock,4,2x4,103,90,"Layout 31.25-33.25"" 69.75-71.75"""
+H.0204.02412.WS Stud Window,HEM Hemlock,4,2x4,24.5,90,
+H.0204.13600.DH Door Header 1,HEM Hemlock,1,2x4,136,72,Long to Long
+H.0204.14400.PH Porch Header 2,HEM Hemlock,1,2x4,144,90,
+H.0204.14400.DH Door Header 2,HEM Hemlock,1,2x4,144,90,
+H.0204.12534.PH Porch Header 1,HEM Hemlock,1,2x4,125.75,72,Long to Long
+H.0204.01200.TB Temporary Bracing,HEM Hemlock,6,2x4,12,90,
+P.0204.19200.EL Extra lumber,HEM Hemlock,1,2x4,144,90,
