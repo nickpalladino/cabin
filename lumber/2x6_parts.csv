@@ -1,0 +1,14 @@
+LABEL / PART DESCRIPTION,MATERIAL,QTY,DIM,LEN,ANGLE,NOTES
+H.0206.09600.SK-E Skids,HEM Hemlock,4,2x6,96,45,
+H.0206.12000.SK Skids,HEM Hemlock,4,2x6,120,90,
+H.0206.12000.SK-E Skids,HEM Hemlock,4,2x6,120,45,
+H.0206.14400.SK Skids,HEM Hemlock,4,2x6,144,90,
+H.0206.14400.SK-E Skids,HEM Hemlock,4,2x6,144,45,
+H.0206.16800.SK Skids,HEM Hemlock,4,2x6,168,90,
+H.0206.16800.SK-E Skids,HEM Hemlock,4,2x6,168,45,
+H.0206.19200.RJ Rim Joist,HEM Hemlock,2,2x6,192,90,
+H.0206.14400.RJ Rim Joist,HEM Hemlock,4,2x6,144,90,
+H.0206.14012.FJ Joist Floor,HEM Hemlock,21,2x6,140.5,90,
+H.0206.02218.BL Blocking for Plywood,HEM Hemlock,34,2x6,22.13,90,
+H.0206.02114.BL Blocking for Plywood,HEM Hemlock,2,2x6,21.25,90,
+H.0206.07538.RA Rafter Common,HEM Hemlock,42,2x6,75.38,18.5,"LONG to SHORT Mark Crown Up, Use Rafter Patterns"

@@ -1,0 +1,23 @@
+LABEL / PART DESCRIPTION,MATERIAL,QTY,DIM,LEN,ANGLE,NOTES
+P.0105.08100.DT Door Casing,PINE KD Rough Sawn Pine,2,1x5,81.00,90,
+P.0104.04412.DT Door Trim Header,PINE KD Rough Sawn Pine,1,1x4,44.50,90,Attach plaque & Center
+P.0104.08100.DT Door Trim,PINE KD Rough Sawn Pine,2,1x4,81.00,90,Attach plaque & Center
+P.0102.03612.DT Door Stop Top,PINE KD Rough Sawn Pine,1,1x2,36.50,90,
+P.0102.08000.DT Door Stop Sides,PINE KD Rough Sawn Pine,2,1x2,80.00,90,
+P.0104.04412.WT Window Trim,PINE KD Rough Sawn Pine,4,1x4,44.50,90,
+P.0104.02412.WT Window Trim Sides,PINE KD Rough Sawn Pine,4,1x4,24.50,90,
+P.0103.03612.WT Window Stop,PINE KD Rough Sawn Pine,4,1x3,36.50,90,
+P.0103.02212.WT Window Stop,PINE KD Rough Sawn Pine,4,1x3,22.50,90,
+P.0103.07538.PT Porch Trim,PINE KD Rough Sawn Pine,2,1x3,75.38,18.5,Long to Short
+P.0106.07538.PT Porch Trim,PINE KD Rough Sawn Pine,2,1x6,75.38,18.5,Long to Short
+P.0106.14700.PT Porch Trim,PINE KD Rough Sawn Pine,1,1x6,147.00,90,Long to Short
+P.0106.04800.PT Porch Trim,PINE KD Rough Sawn Pine,2,1x6,48.00,90,
+,TEMP,AND,EXTRA,,,
+LABEL / PART DESCRIPTION,MATERIAL,QTY,DIM,LEN,ANGLE,NOTES
+H.0104.12000.TB Temporary Bracing,HEM Hemlock,3,1x4,120.00,90,
+H.0104.14400.TB Temporary Bracing,HEM Hemlock,6,1x4,144.00,90,
+H.0104.16800.TB Temporary Bracing,HEM Hemlock,3,1x4,168.00,90,
+H.0104.04800.TB Temporary Bracing,HEM Hemlock,1,1x4,48.00,90,
+H.0204.01200.TB Temporary Bracing,HEM Hemlock,6,2x4,12.00,90,
+P.0204.19200.EL Extra lumber,HEM Hemlock,1,2x4,144.00,90,
+P.0112.19200.EL Extra lumber,PINE KD Rough Sawn Pine,2,1x12,144.00,90,
