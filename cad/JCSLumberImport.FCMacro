@@ -1,0 +1,518 @@
+import os
+import sys
+import FreeCAD as App
+import FreeCADGui as Gui
+import Part
+import math
+import csv
+from PySide import QtGui, QtCore
+from FreeCAD import Units
+
+class LumberImporter:
+    def __init__(self):
+        self.doc = App.ActiveDocument
+        if not self.doc:
+            self.doc = App.newDocument("JamaicaCottageShop")
+        
+        # Flag for using exact dimensions
+        self.use_exact_dimensions = False
+        
+        # Store a flag for whether we've asked the user about dimensions
+        self.dimensions_selected = False
+        
+        # Dictionary to map nominal dimension strings to standard lumber sizes in inches
+        # Standard dimensional lumber (finished) sizes
+        self.standard_map = {
+            "4x4": ("3.5 in", "3.5 in"),     # Actually 3-1/2" x 3-1/2"
+            "2x8": ("1.5 in", "7.25 in"),    # Actually 1-1/2" x 7-1/4"
+            "2x6": ("1.5 in", "5.5 in"),     # Actually 1-1/2" x 5-1/2"
+            "2x4": ("1.5 in", "3.5 in"),     # Actually 1-1/2" x 3-1/2"
+            "1x12": ("0.75 in", "11.25 in"), # Actually 3/4" x 11-1/4"
+            "1x10": ("0.75 in", "9.25 in"),  # Actually 3/4" x 9-1/4"
+            "1x8": ("0.75 in", "7.25 in"),   # Actually 3/4" x 7-1/4"
+            "1x6": ("0.75 in", "5.5 in"),    # Actually 3/4" x 5-1/2"
+            "1x5": ("0.75 in", "4.5 in"),    # Actually 3/4" x 4-1/2"
+            "1x4": ("0.75 in", "3.5 in"),    # Actually 3/4" x 3-1/2"
+            "1x3": ("0.75 in", "2.5 in"),    # Actually 3/4" x 2-1/2"
+            "1x2": ("0.75 in", "1.5 in"),    # Actually 3/4" x 1-1/2"
+            "0x12": ("0.5 in", "11.25 in"),  # Actually 1/2" x 11-1/4"
+            "0x2": ("0.5 in", "1.5 in")      # Actually 1/2" x 1-1/2"
+        }
+        
+        # Exact dimensions (exactly as advertised)
+        self.exact_map = {
+            "4x4": ("4 in", "4 in"),       # Exact 4x4
+            "2x8": ("2 in", "8 in"),       # Exact 2x8
+            "2x6": ("2 in", "6 in"),       # Exact 2x6
+            "2x4": ("2 in", "4 in"),       # Exact 2x4
+            "1x12": ("1 in", "12 in"),     # Exact 1x12
+            "1x10": ("1 in", "10 in"),     # Exact 1x10
+            "1x8": ("1 in", "8 in"),       # Exact 1x8
+            "1x6": ("1 in", "6 in"),       # Exact 1x6
+            "1x5": ("1 in", "5 in"),       # Exact 1x5
+            "1x4": ("1 in", "4 in"),       # Exact 1x4
+            "1x3": ("1 in", "3 in"),       # Exact 1x3
+            "1x2": ("1 in", "2 in"),       # Exact 1x2
+            "0x12": ("0.5 in", "12 in"),   # Exact 0.5x12
+            "0x2": ("0.5 in", "2 in")      # Exact 0.5x2
+        }
+        
+    def ask_dimension_preference(self):
+        """
+        Ask the user whether they want to use exact or standard lumber sizes
+        """
+        if self.dimensions_selected:
+            return
+            
+        # Create a messagebox to ask the user
+        msg = QtGui.QMessageBox()
+        msg.setIcon(QtGui.QMessageBox.Question)
+        msg.setWindowTitle("Lumber Dimensions")
+        msg.setText("Which lumber dimensions would you like to use?")
+        
+        # Add detailed explanation of the differences
+        explanation = (
+            "Standard Lumber Dimensions:\n"
+            "- Actual measurements of standard dimensional lumber\n"
+            "- Smaller than the advertised size\n"
+            "- Example: A 2x4 is actually 1.5\" x 3.5\"\n\n"
+            "Exact Dimensions:\n"
+            "- Uses the exact dimensions as advertised\n"
+            "- Example: A 2x4 would be exactly 2\" x 4\"\n\n"
+            "Choose based on the type of lumber in your project."
+        )
+        msg.setInformativeText(explanation)
+        
+        # Add buttons for the two options
+        standard_button = msg.addButton("Standard Lumber", QtGui.QMessageBox.ActionRole)
+        exact_button = msg.addButton("Exact Dimensions", QtGui.QMessageBox.ActionRole)
+        
+        # Set the default
+        msg.setDefaultButton(standard_button)
+        
+        # Show the dialog and get the response
+        msg.exec_()
+        
+        # Set the flag based on the button clicked
+        if msg.clickedButton() == exact_button:
+            self.use_exact_dimensions = True
+        else:
+            self.use_exact_dimensions = False
+            
+        self.dimensions_selected = True
+
+    def import_lumber_from_file(self, filepath):
+        """
+        Imports lumber from a CSV file and creates 3D objects in FreeCAD
+        """
+        # Check file extension
+        _, ext = os.path.splitext(filepath)
+        
+        if ext.lower() != '.csv':
+            print(f"Unsupported file type: {ext}. Please use CSV (.csv) files.")
+            return False
+            
+        return self.import_from_csv(filepath)
+    
+    def import_from_csv(self, filepath):
+        """Imports lumber from a CSV file"""
+        try:
+            with open(filepath, 'r', newline='', encoding='utf-8') as csvfile:
+                # Read the first row to get headers
+                reader = csv.reader(csvfile)
+                headers = next(reader)
+                
+                # Read the rest of the rows
+                rows = []
+                for row in reader:
+                    row_data = {}
+                    for i, header in enumerate(headers):
+                        if i < len(row) and header:  # Skip empty headers and handle missing values
+                            row_data[header] = row[i]
+                    rows.append(row_data)
+                
+            return self.process_data(headers, rows)
+        except Exception as e:
+            print(f"Error processing CSV file: {e}")
+            return False
+    
+    def process_data(self, headers, rows):
+        """Process the data from either Excel or CSV import"""
+        # Required columns
+        required_cols = ["MATERIAL", "QTY", "DIM", "LEN", "ANGLE", "Section"]
+        for col in required_cols:
+            if col not in headers:
+                print(f"Error: Required column '{col}' not found in the file")
+                return False
+        
+        # Create a dictionary to store groups by section
+        section_groups = {}
+        
+        # Ask user about dimension preference
+        self.ask_dimension_preference()
+        
+        # Process each row
+        for row in rows:
+            # Get material type
+            material = row.get("MATERIAL")
+            if not material:
+                continue
+                
+            # Filter for Hemlock and Pine (not CDX)
+            material = str(material).lower()
+            if not ((("hemlock" in material) or ("pine" in material)) and ("cdx" not in material)):
+                continue
+            
+            # Get other values from the row
+            part_name = row.get("LABEL / PART DESCRIPTION", "Unnamed Part")
+            
+            # Handle quantity
+            qty_val = row.get("QTY")
+            if not qty_val:
+                qty = 1
+            else:
+                try:
+                    qty = int(float(qty_val))
+                except:
+                    qty = 1
+            
+            # Handle dimensions
+            dim_str = row.get("DIM")
+            if not dim_str:
+                print(f"Warning: Missing dimension for part '{part_name}'. Skipping.")
+                continue
+                
+            # Check if this dimension is in our map
+            dim_map = self.exact_map if self.use_exact_dimensions else self.standard_map
+            if dim_str not in dim_map:
+                print(f"Warning: Unknown dimension '{dim_str}' for part '{part_name}'. Skipping.")
+                continue
+            
+            # Handle length
+            length_val = row.get("LEN")
+            if not length_val:
+                print(f"Warning: Missing length for part '{part_name}'. Skipping.")
+                continue
+            try:
+                length = float(length_val)
+            except:
+                print(f"Warning: Invalid length '{length_val}' for part '{part_name}'. Skipping.")
+                continue
+            
+            # Handle angle
+            angle_val = row.get("ANGLE")
+            if not angle_val:
+                angle = 90.0
+            else:
+                try:
+                    angle = float(angle_val)
+                except:
+                    angle = 90.0
+            
+            # Handle notes
+            notes = row.get("NOTES", "")
+            if notes is None:
+                notes = ""
+            
+            # Handle section
+            section = row.get("Section")
+            if not section:
+                section = "Unsorted"
+            
+            # Add this lumber to the appropriate section group
+            if section not in section_groups:
+                section_groups[section] = []
+            
+            section_groups[section].append({
+                "name": part_name,
+                "material": material,
+                "qty": qty,
+                "dim": dim_str,
+                "length": length,
+                "angle": angle,
+                "notes": notes
+            })
+        
+        # Create FreeCAD objects for each section
+        for section, lumber_list in section_groups.items():
+            # Create a group for this section
+            section_group = self.doc.addObject("App::DocumentObjectGroup", section.replace(" ", "_"))
+            
+            # Create lumber objects in this section
+            for lumber in lumber_list:
+                self.create_lumber_object(lumber, section_group)
+        
+        self.doc.recompute()
+        return True
+    
+    def create_lumber_object(self, lumber_data, parent_group):
+        """
+        Creates a lumber object in FreeCAD based on the provided data
+        """
+        name = lumber_data["name"]
+        dim_str = lumber_data["dim"]
+        length_inches = lumber_data["length"]
+        angle = lumber_data["angle"]
+        qty = lumber_data["qty"]
+        notes = lumber_data["notes"]
+        material = lumber_data["material"]
+        
+        # Get dimensions with proper units
+        # Choose between exact and standard based on user preference
+        dim_map = self.exact_map if self.use_exact_dimensions else self.standard_map
+        width_str, height_str = dim_map[dim_str]
+            
+        width = Units.Quantity(width_str).Value
+        height = Units.Quantity(height_str).Value
+        length = Units.Quantity(f"{length_inches} in").Value
+        
+        # Create a group for this lumber type if multiple quantities
+        if qty > 1:
+            lumber_group = self.doc.addObject("App::DocumentObjectGroup", self.safe_name(name))
+            parent_group.addObject(lumber_group)
+            parent = lumber_group
+        else:
+            parent = parent_group
+        
+        # Create the specified quantity of this lumber
+        for i in range(qty):
+            # Create a unique name if there are multiple of the same part
+            if qty > 1:
+                obj_name = f"{self.safe_name(name)}_{i+1}"
+            else:
+                obj_name = self.safe_name(name)
+            
+            # Check if this is a gable board (based on name or notes)
+            is_gable_board = ('gable' in name.lower() or 'fascia' in name.lower() or 'gable' in notes.lower())
+            has_shallow_angle = (angle != 90 and abs(90 - angle) < 30)
+            
+            # Create the board with or without angle cut
+            if has_shallow_angle and is_gable_board:
+                # Special handling for gable boards with shallow angles
+                board_shape = self.create_gable_board_shape(length, width, height, angle, notes, obj_name)
+                board_obj = self.doc.addObject("Part::Feature", obj_name)
+                board_obj.Shape = board_shape
+            else:
+                # Regular rectangular board with standard angle cut
+                board = Part.makeBox(length, width, height)
+                
+                # Apply angle cut if needed
+                if angle != 90:
+                    board = self.apply_angle_cut(board, angle, notes, length, width, height, obj_name)
+                
+                # Create the Part object
+                board_obj = self.doc.addObject("Part::Feature", obj_name)
+                board_obj.Shape = board
+            
+            # Set the appearance based on material type
+            self.set_material_appearance(board_obj, material)
+            
+            # Add to parent group
+            parent.addObject(board_obj)
+
+    def create_gable_board_shape(self, length, width, height, angle, notes, name):
+        """
+        Creates a direct shape for gable boards using Part module
+        This uses the lowest-level shape creation to avoid compatibility issues
+        """
+        try:
+            # Check if this is a "long point to short point" cut
+            long_to_short = "long point to short point" in notes.lower()
+            
+            if long_to_short or "install and cut" in notes.lower():
+                # Calculate the height differential based on angle
+                cut_angle = 90 - angle  # Convert to angle from vertical
+                height_diff = length * math.tan(math.radians(cut_angle))
+                
+                # Create points for the shape
+                # Base (bottom) points
+                p1 = App.Vector(0, 0, 0)           # Front left
+                p2 = App.Vector(length, 0, 0)      # Front right
+                p3 = App.Vector(length, width, 0)  # Back right
+                p4 = App.Vector(0, width, 0)       # Back left
+                
+                # Top points
+                p5 = App.Vector(0, 0, height - height_diff)  # Front left top (with slope)
+                p6 = App.Vector(length, 0, height)           # Front right top
+                p7 = App.Vector(length, width, height)       # Back right top
+                p8 = App.Vector(0, width, height - height_diff)  # Back left top (with slope)
+                
+                # Create the faces for the shape
+                # Bottom face
+                bottom = Part.Face(Part.makePolygon([p1, p2, p3, p4, p1]))
+                
+                # Top face (sloped)
+                top = Part.Face(Part.makePolygon([p5, p6, p7, p8, p5]))
+                
+                # Side faces
+                front = Part.Face(Part.makePolygon([p1, p2, p6, p5, p1]))
+                back = Part.Face(Part.makePolygon([p4, p3, p7, p8, p4]))
+                left = Part.Face(Part.makePolygon([p1, p5, p8, p4, p1]))
+                right = Part.Face(Part.makePolygon([p2, p6, p7, p3, p2]))
+                
+                # Create a shell and solid
+                try:
+                    shell = Part.Shell([bottom, top, front, back, left, right])
+                    solid = Part.Solid(shell)
+                    return solid
+                except Exception as e:
+                    print(f"Error creating solid shape: {e}, falling back to box shape")
+                    # Fall back to simple box
+                    return Part.makeBox(length, width, height)
+            else:
+                # For standard end cuts with shallow angles, use standard shape
+                board = Part.makeBox(length, width, height)
+                return self.apply_angle_cut(board, angle, notes, length, width, height, name)
+                
+        except Exception as e:
+            print(f"Error creating gable board shape: {e}")
+            # Fall back to rectangular board
+            return Part.makeBox(length, width, height)
+
+    def apply_angle_cut(self, board, angle, notes, length, width, height, part_name):
+        """
+        Applies an angle cut to a board using a simple cutting approach
+        """
+        # If angle is 90, no cut needed
+        if angle == 90:
+            return board
+            
+        try:
+            # Check for specific cut patterns in notes
+            both_ends = "both ends" in notes.lower()
+            
+            # Default to standard end cuts
+            # Simple angle cut at end of board
+            cut_angle = 90 - angle  # Convert to angle from vertical
+            
+            # --------- Handle special cut patterns based on notes ---------
+            # Check for "long point to short point" cuts (like for rafters)
+            if "long point to short point" in notes.lower():
+                # This is a rafter cut along the length (e.g. for gable rafters)
+                # Create a wedge-shaped cutter
+                slope = math.tan(math.radians(cut_angle))
+                height_diff = length * slope
+                
+                # Create a box that's longer and taller than our board
+                cutter_length = length * 1.5
+                cutter_height = height + abs(height_diff) * 2
+                cutter = Part.makeBox(cutter_length, width * 2, cutter_height)
+                
+                # Position the cutter
+                cutter.translate(App.Vector(-cutter_length * 0.25, -width/2, -cutter_height * 0.25))
+                
+                # Rotate the cutter
+                cutter.rotate(App.Vector(0, 0, 0), App.Vector(0, 1, 0), cut_angle)
+                
+                # Move cutter to proper height
+                if cut_angle > 0:
+                    cutter.translate(App.Vector(0, 0, height))
+                
+                # Cut the board
+                result = board.cut(cutter)
+                if result.isNull():
+                    print(f"Warning: Angle cut for {part_name} resulted in null shape. Using original board.")
+                    return board
+                    
+                return result
+                
+            else:
+                # Standard end cut(s)
+                # Create a cutting block at the end of the board
+                cut_size = max(length, width, height) * 2
+                
+                # End 1 cut (at the end of the board)
+                end_cutter = Part.makeBox(cut_size, cut_size, cut_size)
+                end_cutter.translate(App.Vector(length, -cut_size/2 + width/2, -cut_size/2 + height/2))
+                
+                # Rotate for angle
+                end_cutter.rotate(App.Vector(length, width/2, height/2), App.Vector(0, 1, 0), cut_angle)
+                
+                # Apply cut
+                result = board.cut(end_cutter)
+                
+                # Check for null result
+                if result.isNull():
+                    print(f"Warning: First angle cut for {part_name} resulted in null shape. Using original board.")
+                    return board
+                    
+                # If we need to cut both ends
+                if both_ends:
+                    # Create a cutting block at the beginning of the board
+                    start_cutter = Part.makeBox(cut_size, cut_size, cut_size)
+                    start_cutter.translate(App.Vector(-cut_size, -cut_size/2 + width/2, -cut_size/2 + height/2))
+                    
+                    # Rotate for same angle but opposite direction
+                    start_cutter.rotate(App.Vector(0, width/2, height/2), App.Vector(0, 1, 0), -cut_angle)
+                    
+                    # Apply second cut
+                    final_result = result.cut(start_cutter)
+                    
+                    # Check for null result
+                    if final_result.isNull():
+                        print(f"Warning: Second angle cut for {part_name} resulted in null shape. Using first cut only.")
+                        return result
+                        
+                    return final_result
+                else:
+                    return result
+        
+        except Exception as e:
+            print(f"Warning: Error creating angle cut for {part_name}: {e}")
+            return board  # Return original board if there's an error
+    
+    def set_material_appearance(self, obj, material):
+        """
+        Sets the appearance of the object based on the material type
+        """
+        if "hemlock" in material.lower():
+            # Hemlock - lighter color
+            obj.ViewObject.ShapeColor = (0.8, 0.7, 0.5)  # Light tan color
+        elif "pine" in material.lower():
+            # Pine - yellowish color
+            obj.ViewObject.ShapeColor = (0.9, 0.8, 0.5)  # Light yellow color
+        
+        # Make edges visible
+        obj.ViewObject.DisplayMode = "Flat Lines"
+    
+    def safe_name(self, name):
+        """
+        Creates a safe object name from the provided string
+        """
+        # Replace special characters and spaces
+        safe = name.replace(" ", "_").replace(".", "_").replace("/", "_")
+        safe = ''.join(char for char in safe if char.isalnum() or char == '_')
+        
+        # Ensure the name is not empty and doesn't start with a number
+        if not safe:
+            safe = "Part"
+        elif safe[0].isdigit():
+            safe = "P_" + safe
+        
+        return safe
+
+def import_lumber():
+    """
+    Main function to display file dialog and import lumber
+    """
+    # Create file dialog
+    dialog = QtGui.QFileDialog()
+    dialog.setNameFilter("CSV files (*.csv)")
+    dialog.setFileMode(QtGui.QFileDialog.ExistingFile)
+    
+    if dialog.exec_():
+        filepath = dialog.selectedFiles()[0]
+        importer = LumberImporter()
+        success = importer.import_lumber_from_file(filepath)
+        
+        if success:
+            # Set display mode to switch to isometric view
+            Gui.activeDocument().activeView().viewIsometric()
+            Gui.SendMsgToActiveView("ViewFit")
+            print("Lumber imported successfully")
+        else:
+            print("Error importing lumber")
+
+# Run the import function when the macro is executed
+if __name__ == "__main__":
+    import_lumber()
